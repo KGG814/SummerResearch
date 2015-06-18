@@ -7,23 +7,34 @@ from FeatureDetectors import *
 calibrationFile = 'CamCalib.pckl'
 
 #parameters for median blur 
-kernalSize = 11              #Aperture linear size; it must be odd and greater than 1, for example: 3, 5, 7 ...
+#Aperture linear size; it must be odd and greater than 1, for example: 3, 5, 7 ...
 
+kernalSize = 11              
 #adaptiveThreshold parameters
-thresholdingBlockSize = 15    #Size of a pixel neighborhood that is used to calculate a threshold value for the pixel: 3, 5, 7, and so on.
-thresholdingConstant = 2    #Constant subtracted from the mean or weighted mean 
+#Size of a pixel neighborhood that is used to calculate a threshold value for 
+#the pixel: 3, 5, 7, and so on.
+thresholdingBlockSize = 15
+#Constant subtracted from the mean or weighted mean 
+thresholdingConstant = 2
 
 #Canny edge detector parameters
-edgeThreshold1 = 100          #First threshold for the hysteresis procedure
-edgeThreshold2 = 150          #Second threshold for the hysteresis procedure
-edgeApertureSize = 3        #Aperture size for the Sobel() operator
+#First threshold for the hysteresis procedure
+edgeThreshold1 = 100
+#Second threshold for the hysteresis procedure
+edgeThreshold2 = 150
+#Aperture size for the Sobel() operator
+edgeApertureSize = 3
 
 #HOUGH transform parameters
-angleRange =  pi/180              #Angle resolution of the accumulator in radians
-distanceRange = 1             #Distance resolution of the accumulator in pixels
-lineThreshold =  100            #Accumulator threshold parameter. Only those lines are returned that get enough votes (>threshold)
-
-fieldOfView = 72              #Horizontal Field of View
+#Angle resolution of the accumulator in radians
+angleRange =  pi/180
+#Distance resolution of the accumulator in pixels
+distanceRange = 1
+#Accumulator threshold parameter. Only those lines are returned that 
+#get enough votes (>threshold)
+lineThreshold =  100
+#Horizontal Field of View
+fieldOfView = 72
 
 detectorObj = IMAGE_DOORS(kernalSize,thresholdingBlockSize,thresholdingConstant,
                           edgeThreshold1,edgeThreshold2,edgeApertureSize,
@@ -42,7 +53,8 @@ def _cleanImage(image):
     obj = pickle.load(f)
   (tf,camera_matrix,dist_coefs,Hom)=obj
   h,  w = image.shape[:2]
-  newcameramtx, roi=cv2.getOptimalNewCameraMatrix(camera_matrix,dist_coefs,(w,h),1,(w,h))
+  newcameramtx, roi=cv2.getOptimalNewCameraMatrix(camera_matrix,
+                                                  dist_coefs,(w,h),1,(w,h))
   dst = cv2.undistort(image, camera_matrix, dist_coefs, None, newcameramtx)
   x,y,w,h = roi
   dst = dst[y:y+h, x:x+w]
