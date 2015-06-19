@@ -21,15 +21,8 @@ def init_feature(name):
   elif chunks[0] == 'surf':
     detector = cv2.xfeatures2d.SURF_create(800)
     norm = cv2.NORM_L2
-  else:
-    print "Error"
-  if norm == cv2.NORM_L2:
-      flann_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
-  else:
-      flann_params= dict(algorithm = FLANN_INDEX_LSH,
-                         table_number = 6, # 12
-                         key_size = 12,     # 20
-                         multi_probe_level = 1) #2
+  flann_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+
   matcher = cv2.FlannBasedMatcher(flann_params, {})  # bug : need to pass empty dict (#1329)
   
   return detector, matcher
@@ -46,7 +39,7 @@ def filter_matches(kp1, kp2, matches, ratio = 0.75):
     p2 = np.float32([kp.pt for kp in mkp2])
     return p1, p2
     
-def match_and_draw(desc1, desc2, kp1, kp2):
+def findTransform(desc1, desc2, kp1, kp2, shape):
   raw_matches = matcher.knnMatch(desc1, trainDescriptors = desc2, k = 2) #2
   p1, p2 = filter_matches(kp1, kp2, raw_matches)
   if len(p1) >= 4:
@@ -59,7 +52,7 @@ def match_and_draw(desc1, desc2, kp1, kp2):
   z = np.zeros((np.shape(p1)[0],1))
   p1 =  np.asmatrix(np.hstack((p1,z)))
   p2 =  np.asmatrix(np.hstack((p2,z)))
-  return rigid_transform_3D(p1,p2)
+  return rigid_transform_3D(p1,p2, shape)
   
 def getComponents(H):
   '''((translationx, translationy), rotation, (scalex, scaley), shear)'''
@@ -81,39 +74,35 @@ def getComponents(H):
 
   return (translation, theta, scale, shear)
   
-def rigid_transform_3D(A, B):
+# Returns the rotation and the distance moved from the perspective of A
+# TODO Need to fix this so we can use shape
+def rigid_transform_3D(A, B, shape):
   assert len(A) == len(B)
   N = A.shape[0]; # total points
   centroid_A = np.mean(A, axis=0)
   centroid_B = np.mean(B, axis=0)
   
   # centre the points
-  AA = A - np.tile(centroid_A, (N, 1))
-  BB = B - np.tile(centroid_B, (N, 1))
+  A_centred = A - np.tile(centroid_A, (N, 1))
+  B_centred = B - np.tile(centroid_B, (N, 1))
 
   # dot is matrix multiplication for array
-  H = np.transpose(AA) * BB
+  H = np.transpose(A_centred) * B_centred
 
   U, S, Vt = np.linalg.svd(H)
-
-  R = Vt.T * U.T
-
-  # special reflection case
-  if np.linalg.det(R) < 0:
-     print "Reflection detected"
-     Vt[2,:] *= -1
-     R = Vt.T * U.T
-  centre1 = centroid_A.T
-  centre1 = centre1 - 500
-  centre1[2,0] += 500
-  centre2 = centroid_B.T
-  centre2 = centre2 - 500
-  centre2[2,0] += 500
-  
-  t = R*centre1 - centre2
-  R = -math.degrees(math.asin(R[0,1]))
-
-  return R, t, centroid_A.T, centroid_B.T
+  r = U.T * Vt.T
+  displacementA = centroid_A.T
+  displacementA[0,0] = displacementA[0,0] - shape[0]/2
+  displacementA[1,0] = displacementA[1,0] - shape[1]/2
+  displacementB = centroid_B.T
+  displacementB[0,0] = displacementB[0,0] - shape[0]/2
+  displacementB[1,0] = displacementB[1,0] - shape[1]/2
+  t = displacementA- r*displacementB 
+  # Extract angle from rotation matrix
+  r = math.degrees(-math.asin(r[0,1]))
+  print centroid_A[0,1]
+  return (r, t, (int(centroid_A[0,0]),int(centroid_A[0,1])), 
+         (int(centroid_B[0,0]),int(centroid_B[0,1])))
 
 if __name__ == '__main__':
 
@@ -123,36 +112,29 @@ if __name__ == '__main__':
     feature_name = opts.get('--feature', 'surf')
     try: fn1, fn2 = args
     except:
-        fn1 = '../c/box.png'
-        fn2 = '../c/box_in_scene.png'
-
+        fn1 = '../'
+        fn2 = '../'
+    
     img1 = cv2.imread(fn1, 0)
     img2 = cv2.imread(fn2, 0)
     detector, matcher = init_feature(feature_name)
-    if detector != None:
-      #print 'using', feature_name
-      pass
-    else:
-      print 'unknown feature:', feature_name
-      sys.exit(1)
-
-    green = (255, 255, 0)
+    #flann_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+    #detector = cv2.xfeatures2d.SURF_create()
+    #matcher = cv2.FlannBasedMatcher(flann_params, {})
     kp1, desc1 = detector.detectAndCompute(img1, None)
     kp2, desc2 = detector.detectAndCompute(img2, None)
+    white = 255
+    print 'img1 - %d features, img2 - %d features' % (len(kp1), len(kp2)) 
     
-    print 'img1 - %d features, img2 - %d features' % (len(kp1), len(kp2))  
-    R, t, centre1, centre2 = match_and_draw(desc1, desc2, kp1, kp2)
-    print int(centre1[0,0]), int(centre1[1,0])  
-    print R
-    print t
-    print "test"
-    cv2.circle(img1, (500, 500), 10, green, 2)
-    cv2.circle(img1, (int(centre1[0,0]), int(centre1[1,0])), 10, green, 2)
-    cv2.circle(img2, (500, 500), 10, green, 2)
-    cv2.circle(img2, (int(centre2[0,0]), int(centre2[1,0])), 10, green, 2)
-    cv2.imshow('image2', img2)
+    R, t, centre1, centre2 = findTransform(desc1, desc2, kp1, 
+                                            kp2, np.shape(img1))
+    print centre1
+    print centre2 
+    cv2.circle(img1, centre1, 2, white, -1)
+    cv2.circle(img2, centre2, 2, white, -1)
     cv2.imshow('image1', img1)
-    
-    
+    cv2.imshow('image2', img2)
+    print "Rotation:", R, "degrees"
+    print "Translation:", t[0,0], t[1,0]
     cv2.waitKey(0)
     #cv2.destroyAllWindows()
