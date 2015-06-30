@@ -91,10 +91,10 @@ def rigid_transform_3D(A, B, shape):
 
   U, S, Vt = np.linalg.svd(H)
   r = U.T * Vt.T
-  displacementA = centroid_A.T
+  displacementA = centroid_A.T.copy()
   displacementA[0,0] = displacementA[0,0] - shape[0]/2
   displacementA[1,0] = displacementA[1,0] - shape[1]/2
-  displacementB = centroid_B.T
+  displacementB = centroid_B.T.copy()
   displacementB[0,0] = displacementB[0,0] - shape[0]/2
   displacementB[1,0] = displacementB[1,0] - shape[1]/2
   t = displacementA- r*displacementB 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     
     img1 = cv2.imread(fn1, 0)
     img2 = cv2.imread(fn2, 0)
-    detector, matcher = init_feature(feature_name)
+    detector, matcher = init_feature("surf")
     #flann_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
     #detector = cv2.xfeatures2d.SURF_create()
     #matcher = cv2.FlannBasedMatcher(flann_params, {})
@@ -130,6 +130,7 @@ if __name__ == '__main__':
                                             kp2, np.shape(img1))
     print centre1
     print centre2 
+    
     cv2.circle(img1, centre1, 2, white, -1)
     cv2.circle(img2, centre2, 2, white, -1)
     cv2.imshow('image1', img1)

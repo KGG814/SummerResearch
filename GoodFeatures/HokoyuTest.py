@@ -23,12 +23,16 @@ for x in range(0, numSamples):
 scalingFactor = 400//8
 cartesianPoints = cartesianPoints
 
-image = numpy.ones((400,400))*255
+image1 = numpy.ones((400,400))*255
 
 for point in cartesianPoints:
   x = int(point[0]*scalingFactor)+200
   y = int(point[1]*scalingFactor)+200
-  image[x][y] = 0
-cv2.imwrite("test.jpg", image)
-cv2.imshow("image", image)
+  image1[x][y] = 0
+  
+image2 = cv2.GaussianBlur(image1, (3,3), 0.27)
+ 
+cv2.imwrite("test.jpg", image2)
+cv2.imshow("image1", image1)
+cv2.imshow("image2", image2)
 cv2.waitKey(0)

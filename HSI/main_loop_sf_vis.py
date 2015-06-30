@@ -1,4 +1,3 @@
-
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
@@ -75,7 +74,7 @@ def main():
   pitch=0
   yaw=0
   firstTime = True
-  cap = cv2.VideoCapture(1)
+  cap = cv2.VideoCapture(0)
   
   while True:
     ret, currentImage = cap.read()
@@ -97,10 +96,11 @@ def main():
     kp2, des2 = sift.detectAndCompute(previousImage,None)
 
     # Unused FLANN based matcher
-    # matcher = cv2.FlannBasedMatcher(index_params,search_params)
+    matcher = cv2.FlannBasedMatcher(index_params,search_params)
     
     # Currently using a brute force matcher
-    matcher = cv2.BFMatcher()
+    # matcher = cv2.BFMatcher()
+    
     matches = matcher.knnMatch(des1,des2,k=2)
     good = []
     pts1 = []

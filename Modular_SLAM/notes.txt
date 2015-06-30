@@ -1,0 +1,6 @@
+normalVariables
+ObjectNames
+CLASS_NAMES
+File_Names
+function_names/function_Names
+_protected_functions

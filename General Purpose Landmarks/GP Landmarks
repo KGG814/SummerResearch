@@ -1,0 +1,5 @@
+#TODO Draw images using Gaussian kernel (check scan matching paper)
+# σ^2 ≈ σ_s^2 +(rsin(∆θ))^2
+#TODO Kanade-Tomasi corner detection on a gaussian pyramid
+# Could try SURF first
+#TODO Covariance matrix = inverse of structure tensor

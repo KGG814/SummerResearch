@@ -5,6 +5,37 @@
 <\body>
   <doc-data|<doc-title|Abstract Landmark SLAM>>
 
+  Traditional landmark extraction methods for SLAM involve identifying
+  defining features, storing the perceived locations of those features, and
+  then updating landmark and robot location based on reobservation of those
+  features.
+
+  Abstract landmarks will follow a similar methodology, and are able to work
+  in unison with existing landmark types. The main difference in this new
+  type of landmark is that rather than trying to identify unique elements for
+  reobservation in a data set, landmarks are chosen based on the whole data
+  set. The criteria for the selection of these landmarks that was used for
+  this demonstration was asymmetricality of the data set. This will be
+  further discussed towards the end of this paper. This landmark extraction
+  technique was used on LIDAR data, although presumably it should be usable
+  with similar range detection devices.\ 
+
+  \;
+
+  Instead of looking for and identifying discrete shapes, we use the whole
+  LIDAR image as a landmark. Whether an image is a landmark or not will be
+  determined by its asymmetricality, as well as the location of the closest
+  previous landmark.
+
+  These landmarks, rather than having a SLAM state entry which stores its
+  position, will have a state entry that stores the location it was observed
+  at. Not that this does not change the SLAM state matrix. Position and
+  covariance will be calculated based on the change in this point. To allow
+  this calculation, each landmark will have associated with it a LIDAR data
+  set, typically an array of some distances for a given range of angles.
+
+  \;
+
   <math|\<bullet\>> Instead of looking for and identifying discrete shapes,
   we use the whole LIDAR image as a landmark
 
